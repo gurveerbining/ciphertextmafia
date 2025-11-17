@@ -12,7 +12,7 @@ class CipherEnv:
         self.text_len = text_len
         self.max_rounds = max_rounds
         self.alphabet = string.ascii_uppercase + " "
-        self.reset()
+
 
     def _random_sentence(self):
         """Generate an English-like plaintext using Brown corpus words."""
@@ -46,12 +46,23 @@ class CipherEnv:
         self.mask1 = ["_"] * self.text_len
         self.mask2 = ["_"] * self.text_len
         self.round = 0
+
+        print(f"p1: {self.p1}")
+        print(f"\np2: {self.p2}")
+
         return self.x
+    
+    def implied_fragment(self, side, offset, crib):
+        frag=""
+        for i, ch in enumerate(crib):
+            index = offset + i
+            if index >= self.text_len:
+                break
+            if side == 1:
+                frag += chr(self.x[index] ^ ord(ch))
+            else:
+                frag += chr(self.x[index] ^ ord(ch))
+        
+        return frag
 
-env = CipherEnv()
-
-sentence = env._random_sentence()
-
-print(sentence)
-print(len(sentence))
 
