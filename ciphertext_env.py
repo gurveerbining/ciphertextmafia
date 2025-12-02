@@ -8,7 +8,7 @@ except LookupError:
     nltk.download("brown")
 
 class CipherEnv:
-    def __init__(self, text_len=80, max_rounds=10):
+    def __init__(self, text_len=40, max_rounds=100):
         self.text_len = text_len
         self.max_rounds = max_rounds
         self.alphabet = string.ascii_uppercase + " "
@@ -58,11 +58,59 @@ class CipherEnv:
             index = offset + i
             if index >= self.text_len:
                 break
-            if side == 1:
-                frag += chr(self.x[index] ^ ord(ch))
-            else:
-                frag += chr(self.x[index] ^ ord(ch))
+            frag += chr(self.x[index] ^ ord(ch))
         
         return frag
 
+    def apply_proposal(self, side, offset, crib):
+        """Apply crib, Reward: +1 for correct character, -1 for incorrect character"""
+        reward = 0 
 
+        for i, ch in enumerate(crib):
+            index = offset + i
+            if index >= self.text_len:
+                break
+            if side == 1:
+                true_char = self.p1[index]
+                if ch == true_char:
+                    #reveal position
+                    if self.mask1[index] == "_":
+                        self.mask1[index] = true_char
+                        if self.mask2[index] == "_":
+                            self.mask2[index] = self.p2[index]
+                    reward += 1
+                else:
+                    reward -= 1
+            else:
+            #side == 2
+                true_char = self.p2[index]
+                if ch == true_char:
+                    if self.mask2[index] == "_":
+                        self.mask2[index] = true_char
+                        if self.mask1[index] == "_":
+                            self.mask1[index] = self.p1[index]
+                    reward += 1
+                else:
+                    reward -= 1
+
+        done = self.completion_ratio() >= 1.0
+        return reward, done
+
+    def completion_ratio(self):
+        """fraction of characters correctly recovered in both plaintexts"""
+        correct = 0
+        total = 2 * self.text_len
+        for i in range(self.text_len):
+            if self.mask1[i] == self.p1[i]:
+                correct += 1
+            if self.mask2[i] == self.p2[i]:
+                correct += 1
+        
+        return correct/total
+    
+    def print_masks(self):
+        print(f"Mask1: {self.mask1}")
+        print(f"Mask2: {self.mask2}")
+        print(f"Completion: {self.completion_ratio() * 100}%")
+    
+        
