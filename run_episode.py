@@ -1,7 +1,7 @@
 from agent import HonestAgent, ImposterAgent
 
-def run_episode(env, agents, lm, lm_threshold = -25.0):
-    env.reset();
+def run_episode(env, agents):
+    env.reset()
     
     for round in range(env.max_rounds):
         print(f"c1: {env.c1}")
@@ -18,7 +18,7 @@ def run_episode(env, agents, lm, lm_threshold = -25.0):
             # 2) agents vote
             yes_votes = 0
             for a in agents:
-                vote = a.vote(implied, -25)
+                vote = a.vote(side, offset, crib)
                 print(f"{a.name} votes {'YES' if vote else 'NO'}")
                 if vote:
                     yes_votes += 1
@@ -41,7 +41,7 @@ def run_episode(env, agents, lm, lm_threshold = -25.0):
             if yes_votes >= 2:
                 reward, done = env.apply_proposal(side, offset, crib)
                 if reward == 1:
-                    print(f"Proposal accepted → reward {reward}")
+                    print(f"Proposal accepted -> reward {reward}")
                     env.print_masks()
             else:
                 print("Proposal rejected")
@@ -80,7 +80,7 @@ def run_episode(env, agents, lm, lm_threshold = -25.0):
     final_votes = {}
     for a in agents:
         if isinstance(a, HonestAgent):
-            suspect = a.most_suspicious
+            suspect = a.most_suspicious()
             if suspect is None:
                 continue
             final_votes[suspect] = final_votes.get(suspect, 0) + 1

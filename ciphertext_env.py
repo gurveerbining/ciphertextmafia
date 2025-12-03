@@ -53,6 +53,7 @@ class CipherEnv:
         return self.x
     
     def implied_fragment(self, side, offset, crib):
+        """Return the implied plaintext fragment by XORing x with crib"""
         frag=""
         for i, ch in enumerate(crib):
             index = offset + i
@@ -109,8 +110,8 @@ class CipherEnv:
         return correct/total
     
     def print_masks(self):
-        print(f"Mask1: {self.mask1}")
-        print(f"Mask2: {self.mask2}")
+        print("Mask1: ", " ".join(self.mask1))
+        print("Mask2: ", " ".join(self.mask2))
         print(f"Completion: {self.completion_ratio() * 100}%")
     
         

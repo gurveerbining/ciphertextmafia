@@ -1,9 +1,7 @@
 from ciphertext_env import CipherEnv
 from agent import HonestAgent, ImposterAgent
-from lm import NgramLM
 from run_episode import run_episode
 
-lm = NgramLM()
 env = CipherEnv(text_len = 40, max_rounds = 100)
 
 vocab = [
@@ -100,16 +98,16 @@ vocab = [
 
 
 agents = [
-    HonestAgent("A1", vocab, env.text_len, lm),
-    HonestAgent("A2", vocab, env.text_len, lm),
-    ImposterAgent("IMP", vocab, env.text_len, lm)
+    HonestAgent("A1", vocab, env.text_len, env),
+    HonestAgent("A2", vocab, env.text_len, env),
+    ImposterAgent("IMP", vocab, env.text_len, env)
 ]
 
 if __name__ == "__main__":
     num_episodes = 200
     completion_history = []
     for ep in range(num_episodes):
-        stats = run_episode(env, agents, lm)
+        stats = run_episode(env, agents)
         completion = stats.get("completion", 0.0)
         print(f"Episode {ep+1}: completion = {completion*100:.2f}%")
         completion_history.append(completion)

@@ -1,11 +1,13 @@
 import random
+from heuristics import HeuristicScorer
 
 class HonestAgent:
-    def __init__(self, name, vocab, text_len, lm, epsilon = 0.2, alpha = 0.3, gamma = 0.0):
+    def __init__(self, name, vocab, text_len, env, epsilon = 0.2, alpha = 0.3, gamma = 0.0):
         self.name = name
         self.vocab = vocab
         self.text_len = text_len
-        self.lm = lm
+        self.env = env
+        self.heuristic = HeuristicScorer(env)
 
         #Q-Learning parameters
         self.epsilon = epsilon #exploration rate
@@ -57,13 +59,10 @@ class HonestAgent:
         new_q = old_q + self.alpha * (scaled_reward - old_q)
         self.Q[self.last_crib] = new_q
     
-    def vote(self, fragment, lm_threshold):
-        """Vote yes if the fragment looks like English"""
-        if fragment is None:
-            return False
-
-        score = self.lm.score(fragment)
-        return score >= lm_threshold
+    def vote(self, side, offset, crib):
+        """Vote yes/no based on heuristic score of crib"""
+        score = self.heuristic.score(side, offset, crib)
+        return score >= -1.5
 
     def update_trust(self, proposer_name, reward):
         """increase trust when proposer's accepted proposal gives a positive reward, decrease for negative reward"""
@@ -89,12 +88,14 @@ class ImposterAgent:
     - randomly proposes crib
     - sometimes votes incorrectly to sabotage
     """
-    def __init__(self, name, vocab, text_len, lm, lie_vote_prob = 0.3):
+    def __init__(self, name, vocab, text_len, env, lie_vote_prob = 0.3):
         self.name = name
         self.vocab = vocab
         self.text_len = text_len
-        self.lm = lm
         self.lie_vote_prob = lie_vote_prob
+
+        self.env = env
+        self.heuristic = HeuristicScorer(env)
 
     def propose(self):
         """this is random for now, could maybe change this later"""
@@ -103,13 +104,9 @@ class ImposterAgent:
         offset = random.randint(0, self.text_len - len(crib))
         return side, offset, crib
     
-    def vote(self, fragment, lm_threshold):
-        if fragment is None or len(fragment) < 2:
-            return random.random() < 0.5
- 
-        score = self.lm.score(fragment)
-        honest_vote = score >= lm_threshold
-
+    def vote(self, side, offset, crib):
+        """"Imposter lies sometimes and votes incorrectly"""
+        honest_vote = self.heuristic.score(side, offset, crib) >= -1.5
         if random.random() < self.lie_vote_prob:
             return not honest_vote
         
